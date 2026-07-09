@@ -1,2 +1,2 @@
-# KKNWOtgalih-repo-github
+# kkn-manager
 aplikasi KKN managemen
