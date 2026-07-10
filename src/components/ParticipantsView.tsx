@@ -1,6 +1,6 @@
 import { useState, FormEvent, useMemo, ChangeEvent, DragEvent } from 'react';
 import { Participant } from '../types';
-import { Trash2, Users, Edit2, Plus, X, Download, FileSpreadsheet, Upload, AlertTriangle } from 'lucide-react';
+import { Trash2, Users, Edit2, Plus, X, Download, FileSpreadsheet, Upload, AlertTriangle, KeyRound } from 'lucide-react';
 import * as xlsx from 'xlsx';
 import { useAuth } from '../lib/AuthContext';
 
@@ -16,9 +16,10 @@ export function ParticipantsView({ participants, setParticipants, getToken }: Pr
   const { user } = useAuth();
   
   const perms = useMemo(() => getPermissions(user, 'participants'), [user]);
-  const canEdit = perms.update; // backward compatible alias for update
+  const canEdit = perms.update;
   const canCreate = perms.create;
   const canDelete = perms.delete;
+  const isAdmin = user?.nim === '223125416' || user?.nim === '223140101';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
@@ -380,6 +381,26 @@ export function ParticipantsView({ participants, setParticipants, getToken }: Pr
     }
   };
 
+  const resetPassword = async (p: Participant) => {
+    if (!confirm(`Reset password "${p.name}" ke sandi default "123456"?`)) return;
+    const token = await getToken();
+    try {
+      const res = await fetch(`/api/participants/${p.id}/reset-password`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert(`✅ Password ${p.name} berhasil direset ke "123456".`);
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal mereset password.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat mereset password.');
+    }
+  };
+
   const handleExportExcel = () => {
     const dataToExport = participants.map(p => ({
       NIM: p.nim || '-',
@@ -453,8 +474,17 @@ export function ParticipantsView({ participants, setParticipants, getToken }: Pr
                   <td className="p-4 text-gray-600">{p.email || '-'}</td>
                   <td className="p-4 text-gray-600 font-mono text-xs">{p.contact || '-'}</td>
                   <td className="p-4 text-center">
-                    {(canEdit || canDelete) && (
+                    {(canEdit || canDelete || isAdmin) && (
                       <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {isAdmin && (
+                          <button
+                            onClick={() => resetPassword(p)}
+                            title="Reset Password ke 123456"
+                            className="text-gray-400 hover:text-amber-500 transition-colors"
+                          >
+                            <KeyRound className="w-4 h-4" />
+                          </button>
+                        )}
                         {canEdit && (
                           <button onClick={() => openEditModal(p)} className="text-gray-400 hover:text-emerald-600 transition-colors">
                             <Edit2 className="w-4 h-4" />

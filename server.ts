@@ -255,6 +255,31 @@ async function startServer() {
     }
   });
 
+  app.post("/api/participants/:id/reset-password", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      // Hanya admin utama yang boleh reset password
+      const adminUser = await db.select().from(users).where(eq(users.id, req.user!.id));
+      if (adminUser.length === 0 || (adminUser[0].nim !== '223125416' && adminUser[0].nim !== '223140101')) {
+        return res.status(403).json({ error: "Akses ditolak. Hanya Admin yang dapat mereset password." });
+      }
+
+      const targetUser = await db.select().from(users).where(eq(users.id, req.params.id));
+      if (targetUser.length === 0) {
+        return res.status(404).json({ error: "Pengguna tidak ditemukan." });
+      }
+
+      const defaultPassword = "123456";
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+      await db.update(users).set({ password: hashedPassword }).where(eq(users.id, req.params.id));
+
+      await logActivity(req.user!.id, "Reset Password", `Mereset password akun: ${targetUser[0].name}`);
+      res.json({ success: true, message: `Password ${targetUser[0].name} berhasil direset ke sandi default.` });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "Gagal mereset password." });
+    }
+  });
+
   app.delete("/api/participants/:id", requireAuth, async (req: AuthRequest, res) => {
     try {
       const targetId = req.params.id;
