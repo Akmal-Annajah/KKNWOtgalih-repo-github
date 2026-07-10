@@ -35,8 +35,15 @@ async function startServer() {
   // --- LOGS ---
   app.get("/api/logs", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const result = await db.select().from(logs).orderBy(logs.createdAt); // Needs desc ordering optimally
-      res.json(result.reverse()); // simple way to send newest first
+      const result = await db.select().from(logs).orderBy(logs.createdAt);
+      const filteredResult = result.filter(log => {
+        const action = log.action.toLowerCase();
+        return action.includes('keuangan') || 
+               action.includes('tugas') || 
+               action.includes('jadwal') || 
+               action.includes('absensi');
+      });
+      res.json(filteredResult.reverse());
     } catch (e) {
       res.status(500).json({ error: "Failed to fetch logs" });
     }
@@ -407,6 +414,7 @@ async function startServer() {
       const result = await db.insert(tasks).values({
         id, userId: req.user!.id, title, description, assigneeId, status, taskType: taskType || 'non-event', eventId, deadline, priority: priority || 'Medium', referenceLink: referenceLink || ''
       }).returning();
+      await logActivity(req.user!.id, "Menambah tugas", `Tugas baru dibuat: ${title}`);
       res.json(result[0]);
     } catch (e) {
       res.status(500).json({ error: "Failed to create task" });
@@ -430,7 +438,10 @@ async function startServer() {
 
   app.delete("/api/tasks/:id", requireAuth, async (req: AuthRequest, res) => {
     try {
+      const taskToDelete = await db.select().from(tasks).where(eq(tasks.id, req.params.id));
+      const taskTitle = taskToDelete[0]?.title || req.params.id;
       await db.delete(tasks).where(eq(tasks.id, req.params.id));
+      await logActivity(req.user!.id, "Menghapus tugas", `Tugas dihapus: ${taskTitle}`);
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ error: "Failed to delete task" });

@@ -40,6 +40,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
   const [activeTab, setActiveTab] = useState<'all' | 'event' | 'non-event'>('all');
   const [selectedEventId, setSelectedEventId] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [assigneeSearch, setAssigneeSearch] = useState('');
 
   const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
@@ -85,6 +86,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
     setPriority('Medium');
     setReferenceLink('');
     setSelectedEventId('');
+    setAssigneeSearch('');
     setIsAddModalOpen(false);
   };
 
@@ -308,27 +310,75 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">Tugaskan Ke (Pilih Anggota)</label>
-                    <div className="border border-gray-200 rounded-lg p-3 max-h-40 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50/50">
-                      {participants.map(p => {
-                        const isChecked = selectedAssignees.includes(p.id);
-                        return (
-                          <label key={p.id} className="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer hover:text-gray-900">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => {
-                                if (isChecked) {
-                                  setSelectedAssignees(selectedAssignees.filter(id => id !== p.id));
-                                } else {
-                                  setSelectedAssignees([...selectedAssignees, p.id]);
-                                }
-                              }}
-                              className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
-                            />
-                            <span>{p.name} <span className="text-gray-400 font-normal">({p.role})</span></span>
-                          </label>
-                        );
-                      })}
+                    
+                    {/* Search Box */}
+                    <div className="relative mb-2">
+                      <input
+                        type="text"
+                        placeholder="Cari nama atau jabatan anggota..."
+                        value={assigneeSearch}
+                        onChange={e => setAssigneeSearch(e.target.value)}
+                        className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-xs bg-white outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400"
+                      />
+                      <svg className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+
+                    {/* Selected badges */}
+                    {selectedAssignees.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {selectedAssignees.map(id => {
+                          const p = participants.find(p => p.id === id);
+                          if (!p) return null;
+                          return (
+                            <span key={id} className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                              {p.name.split(' ')[0]}
+                              <button type="button" onClick={() => setSelectedAssignees(selectedAssignees.filter(sid => sid !== id))} className="hover:text-red-600 transition-colors">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Checkbox list */}
+                    <div className="border border-gray-200 rounded-lg p-3 max-h-44 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5 bg-gray-50/50">
+                      {participants
+                        .filter(p => {
+                          const q = assigneeSearch.toLowerCase();
+                          return p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q);
+                        })
+                        .map(p => {
+                          const isChecked = selectedAssignees.includes(p.id);
+                          return (
+                            <label key={p.id} className={`flex items-center gap-2 text-xs font-medium cursor-pointer p-1.5 rounded-lg transition-colors ${
+                              isChecked ? 'bg-emerald-50 text-emerald-800' : 'text-gray-700 hover:bg-gray-100'
+                            }`}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  if (isChecked) {
+                                    setSelectedAssignees(selectedAssignees.filter(id => id !== p.id));
+                                  } else {
+                                    setSelectedAssignees([...selectedAssignees, p.id]);
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                              />
+                              <span>{p.name} <span className="text-gray-400 font-normal">({p.role})</span></span>
+                            </label>
+                          );
+                        })
+                      }
+                      {participants.filter(p => {
+                        const q = assigneeSearch.toLowerCase();
+                        return p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q);
+                      }).length === 0 && (
+                        <p className="text-xs text-gray-400 col-span-2 text-center py-4">Anggota tidak ditemukan.</p>
+                      )}
                     </div>
                   </div>
                   <div>
