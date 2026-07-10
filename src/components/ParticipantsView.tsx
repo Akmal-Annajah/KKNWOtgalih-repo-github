@@ -114,10 +114,17 @@ export function ParticipantsView({ participants, setParticipants, getToken }: Pr
         let headerRowIndex = -1;
         for (let i = 0; i < data.length; i++) {
           const row = data[i];
-          if (row && row.some(cell => String(cell).toLowerCase().includes("nama lengkap")) && 
-                     row.some(cell => String(cell).toLowerCase().includes("no. whatsapp"))) {
-            headerRowIndex = i;
-            break;
+          if (row && Array.isArray(row)) {
+            const nameIdx = row.findIndex(cell => String(cell).toLowerCase().includes("nama"));
+            const phoneIdx = row.findIndex(cell => {
+              const s = String(cell).toLowerCase();
+              return s.includes("wa") || s.includes("whatsapp") || s.includes("telepon") || s.includes("hp") || s.includes("kontak");
+            });
+            
+            if (nameIdx !== -1 && phoneIdx !== -1 && nameIdx !== phoneIdx) {
+              headerRowIndex = i;
+              break;
+            }
           }
         }
 
