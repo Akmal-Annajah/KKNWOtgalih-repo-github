@@ -69,6 +69,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
 
   // Add custom name state
   const [customName, setCustomName] = useState('');
+  const [searchName, setSearchName] = useState('');
 
   // Fetch all attendance sessions
   const fetchSessions = async () => {
@@ -974,9 +975,21 @@ export default function AttendanceView({ getToken, participants }: Props) {
 
           {/* ATTENDEE LIST */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-              <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Daftar Kehadiran ({formRecords.length} Orang)</h3>
-              <span className="text-[10px] text-gray-400">Klik status untuk mengubah kehadiran masing-masing</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-gray-100 gap-2">
+              <div>
+                <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Daftar Kehadiran ({formRecords.length} Orang)</h3>
+                <span className="text-[10px] text-gray-400">Klik status untuk mengubah kehadiran</span>
+              </div>
+              <div className="relative w-full sm:w-48">
+                <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Cari nama peserta..."
+                  value={searchName}
+                  onChange={e => setSearchName(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+              </div>
             </div>
 
             {/* Live Stats summary cards for selected session */}
@@ -1000,7 +1013,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
             </div>
 
             <div className="max-h-96 overflow-y-auto space-y-2 pr-1.5">
-              {formRecords.map((record, index) => {
+              {formRecords.map((record, index) => ({ record, index })).filter(({ record }) => record.name.toLowerCase().includes(searchName.toLowerCase())).map(({ record, index }) => {
                 return (
                   <div 
                     key={index} 

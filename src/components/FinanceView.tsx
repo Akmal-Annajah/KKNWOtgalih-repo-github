@@ -6,6 +6,17 @@ import { useAuth } from '../lib/AuthContext';
 
 import { getPermissions } from '../lib/permissions';
 
+const formatRupiah = (val: string | number) => {
+  if (!val) return '';
+  const numStr = String(val).replace(/\D/g, '');
+  return numStr ? Number(numStr).toLocaleString('id-ID') : '';
+};
+
+const parseRupiah = (val: string) => {
+  const parsed = Number(val.replace(/\D/g, ''));
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 interface Props {
   transactions: Transaction[];
   setTransactions: (t: Transaction[]) => void;
@@ -25,6 +36,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [activeTab, setActiveTab] = useState<'kas' | 'proker'>('kas');
+  const [formCategory, setFormCategory] = useState<'kas' | 'proker'>('kas');
   const [proofLink, setProofLink] = useState('');
 
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -104,7 +116,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
       amount: Number(amount),
       date,
       type,
-      category: activeTab,
+      category: formCategory,
       proofLink: '',
       status: 'active' as const
     };
@@ -186,7 +198,10 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
           )}
           {canCreate && (
             <button 
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                setFormCategory(activeTab);
+                setIsAddModalOpen(true);
+              }}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" /> Tambah Transaksi
@@ -234,7 +249,8 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -251,8 +267,8 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                 <tr><td colSpan={5} className="p-8 text-center text-sm text-gray-500">Belum ada transaksi yang dicatat.</td></tr>
               ) : filteredTransactions.map(tx => (
                 <tr key={tx.id} className={`text-sm transition-colors group ${tx.status === 'cancelled' ? 'bg-gray-50' : 'hover:bg-gray-50/50'}`}>
-                  <td className={`p-4 whitespace-nowrap ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-600'}`}>{new Date(tx.date).toLocaleDateString('id-ID')}</td>
-                  <td className={`p-4 font-medium ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{tx.description}</td>
+                  <td className={`p-4 ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-600'}`}>{new Date(tx.date).toLocaleDateString('id-ID')}</td>
+                  <td className={`p-4 font-medium whitespace-normal min-w-[200px] ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{tx.description}</td>
                   <td className="p-4">
                     <div className="flex gap-2 items-center flex-wrap">
                       <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase ${tx.status === 'cancelled' ? 'bg-gray-100 text-gray-500' : (tx.type === 'income' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700')}`}>
@@ -269,7 +285,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                     {tx.type === 'income' ? '+' : '-'} Rp {tx.amount.toLocaleString('id-ID')}
                   </td>
                   <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-center gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <button onClick={() => openHistory(tx)} className="text-gray-400 hover:text-blue-500 transition-colors" title="Histori Perubahan">
                         <History className="w-4 h-4 mx-auto" />
                       </button>
@@ -290,6 +306,40 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="md:hidden space-y-3">
+        {filteredTransactions.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center text-sm text-gray-500">Belum ada transaksi yang dicatat.</div>
+        ) : filteredTransactions.map(tx => (
+          <div key={tx.id} className={`bg-white rounded-xl border shadow-sm p-4 space-y-3 ${tx.status === 'cancelled' ? 'border-gray-100 opacity-60' : 'border-gray-100'}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className={`font-semibold text-sm leading-snug break-words ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{tx.description}</p>
+                <p className={`text-xs mt-0.5 ${tx.status === 'cancelled' ? 'text-gray-300' : 'text-gray-500'}`}>{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              </div>
+              <p className={`font-bold text-sm whitespace-nowrap flex-shrink-0 ml-2 ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : (tx.type === 'income' ? 'text-emerald-600' : 'text-red-600')}`}>
+                {tx.type === 'income' ? '+' : '-'} Rp {tx.amount.toLocaleString('id-ID')}
+              </p>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+              <div className="flex gap-1.5 flex-wrap">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${tx.status === 'cancelled' ? 'bg-gray-100 text-gray-500' : (tx.type === 'income' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700')}`}>
+                  {tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
+                </span>
+                {tx.status === 'cancelled' && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-red-100 text-red-700">Batal</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => openHistory(tx)} className="text-gray-400 hover:text-blue-500 transition-colors p-1.5 rounded-lg hover:bg-blue-50" title="Histori"><History className="w-4 h-4" /></button>
+                {canEdit && <button onClick={() => setEditingTx(tx)} className="text-gray-400 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50" title="Ubah"><Edit2 className="w-4 h-4" /></button>}
+                {canDelete && <button onClick={() => deleteTransaction(tx.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50" title="Hapus"><Trash2 className="w-4 h-4" /></button>}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {editingTx && (
@@ -321,8 +371,8 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Nominal</label>
-                    <input type="number" value={editingTx.amount} onChange={e => setEditingTx({...editingTx, amount: Number(e.target.value)})} className="w-full p-2 border border-gray-200 rounded-lg text-sm" required />
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Nominal (Rp)</label>
+                    <input type="text" inputMode="numeric" value={formatRupiah(editingTx.amount)} onChange={e => setEditingTx({...editingTx, amount: parseRupiah(e.target.value)})} className="w-full p-2 border border-gray-200 rounded-lg text-sm" required />
                   </div>
                 </div>
               </form>
@@ -346,6 +396,19 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
             <div className="p-4 overflow-y-auto">
               <form id="add-tx-form" onSubmit={handleAdd} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Kategori (Kas / Proker)</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input type="radio" name="formCategory" checked={formCategory === 'kas'} onChange={() => setFormCategory('kas')} className="text-emerald-600 focus:ring-emerald-500" />
+                        Kas Peserta
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input type="radio" name="formCategory" checked={formCategory === 'proker'} onChange={() => setFormCategory('proker')} className="text-emerald-600 focus:ring-emerald-500" />
+                        Program Kerja
+                      </label>
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Tanggal</label>
                     <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg text-sm" required />
@@ -363,7 +426,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Nominal (Rp)</label>
-                    <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg text-sm" min="0" required />
+                    <input type="text" inputMode="numeric" value={formatRupiah(amount)} onChange={e => setAmount(parseRupiah(e.target.value).toString())} className="w-full p-2 border border-gray-200 rounded-lg text-sm" required />
                   </div>
                 </div>
               </form>

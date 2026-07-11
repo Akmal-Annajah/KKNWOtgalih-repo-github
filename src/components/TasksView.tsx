@@ -38,6 +38,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
   const [referenceLink, setReferenceLink] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'event' | 'non-event'>('all');
+  const [formTaskType, setFormTaskType] = useState<'event' | 'non-event'>('non-event');
   const [selectedEventId, setSelectedEventId] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [assigneeSearch, setAssigneeSearch] = useState('');
@@ -55,8 +56,8 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
       }
     }
 
-    // Default to 'non-event' if 'all' is selected and creating new task
-    const currentTaskType = activeTab === 'all' ? 'non-event' : activeTab;
+    // Use formTaskType for the new task
+    const currentTaskType = formTaskType;
 
     const newTask = {
       id: crypto.randomUUID(),
@@ -129,7 +130,10 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
         <div className="flex flex-col sm:flex-row gap-3">
           {canCreate && (
             <button 
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                setFormTaskType(activeTab === 'all' ? 'non-event' : activeTab);
+                setIsAddModalOpen(true);
+              }}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
             >
               <Plus className="w-4 h-4" /> Tambah Tugas
@@ -192,7 +196,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                       <div className="flex justify-between items-start mb-1.5">
                         <h4 className="font-medium text-gray-900 text-sm leading-tight pr-4">{task.title}</h4>
                         {canDelete && (
-                          <button onClick={() => removeTask(task.id)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                          <button onClick={() => removeTask(task.id)} className="text-gray-300 hover:text-red-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
@@ -277,9 +281,22 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
             <div className="p-4 overflow-y-auto">
               <form id="task-form" onSubmit={handleAdd} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {activeTab === 'event' && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Tipe Tugas</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input type="radio" name="taskType" checked={formTaskType === 'event'} onChange={() => setFormTaskType('event')} className="text-emerald-600 focus:ring-emerald-500" />
+                        Kegiatan
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input type="radio" name="taskType" checked={formTaskType === 'non-event'} onChange={() => setFormTaskType('non-event')} className="text-emerald-600 focus:ring-emerald-500" />
+                        Non-Kegiatan
+                      </label>
+                    </div>
+                  </div>
+                  {formTaskType === 'event' && (
                     <div className="sm:col-span-2">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Kegiatan</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Pilih Kegiatan</label>
                       <select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} required className="w-full p-2 border border-gray-200 rounded-lg text-sm">
                         <option value="">-- Pilih Kegiatan --</option>
                         {events.map(ev => (
