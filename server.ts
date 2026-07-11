@@ -10,7 +10,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'kkn-secret-key-123';
+const JWT_SECRET = process.env.JWT_SECRET || 'kknmanagerwotgalih2026';
 
 async function startServer() {
   const app = express();
@@ -38,10 +38,10 @@ async function startServer() {
       const result = await db.select().from(logs).orderBy(logs.createdAt);
       const filteredResult = result.filter(log => {
         const action = log.action.toLowerCase();
-        return action.includes('keuangan') || 
-               action.includes('tugas') || 
-               action.includes('jadwal') || 
-               action.includes('absensi');
+        return action.includes('keuangan') ||
+          action.includes('tugas') ||
+          action.includes('jadwal') ||
+          action.includes('absensi');
       });
       res.json(filteredResult.reverse());
     } catch (e) {
