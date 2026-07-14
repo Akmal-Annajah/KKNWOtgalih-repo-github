@@ -26,7 +26,7 @@ function ChangePasswordModal({ isOpen, onClose, getToken }: { isOpen: boolean, o
     setLoading(true);
     setError('');
     setSuccess('');
-    
+
     try {
       const token = await getToken();
       const res = await fetch('/api/auth/password', {
@@ -149,7 +149,7 @@ function AppContent() {
     if (user.nim === '223125416' || user.nim === '223140101' || user.role === 'Ketua') {
       return { participants: 'crud', finance: 'crud', tasks: 'crud', calendar: 'crud', attendance: 'crud' };
     }
-    
+
     let basePerms: any = {};
     try {
       basePerms = typeof user.permissions === 'string' ? JSON.parse(user.permissions) : (user.permissions || {});
@@ -183,7 +183,7 @@ function AppContent() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">KKN Wotgalih Manager</h1>
           <p className="text-sm text-gray-500 mb-8 text-center">Login untuk memantau kegiatan KKN.</p>
-          
+
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Nomor HP</label>
@@ -226,7 +226,10 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50 flex font-sans text-gray-900">
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/20 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+        <div
+          className={`fixed inset-0 bg-black/20 z-40 md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
       )}
 
       <aside className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50 flex flex-col transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -239,7 +242,7 @@ function AppContent() {
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
           {navItems.map(item => {
             const Icon = item.icon;
@@ -256,7 +259,7 @@ function AppContent() {
             );
           })}
         </nav>
-        
+
         <div className="p-4 border-t border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-gray-50">
             <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold text-sm">
@@ -287,9 +290,9 @@ function AppContent() {
             {navItems.find(i => location.pathname.startsWith(i.path))?.label || 'KKN Wotgalih Manager'}
           </span>
         </header>
-        
+
         <div className="flex-1 overflow-auto p-4 md:p-8">
-          <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="max-w-6xl mx-auto">
             {dataLoading ? (
               <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-emerald-600" /></div>
             ) : (

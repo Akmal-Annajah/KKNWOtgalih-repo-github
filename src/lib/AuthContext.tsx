@@ -46,9 +46,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, password })
     });
+
     const data = await res.json();
+
+    console.log("LOGIN RESPONSE:", data);
+
     if (!res.ok) throw new Error(data.error || 'Login failed');
+
     localStorage.setItem('kkn_token', data.token);
+
+    console.log("TOKEN TERSIMPAN");
+    console.log("USER:", data.user);
+
     setUser(data.user);
   };
 

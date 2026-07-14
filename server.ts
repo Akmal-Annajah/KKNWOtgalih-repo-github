@@ -67,87 +67,107 @@ async function startServer() {
     }
   });
 
-  // --- AUTHENTICATION ---
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { nim, phone, password, name, email, role } = req.body;
-      const existingUser = await db.select().from(users).where(eq(users.phone, phone));
-
-      if (existingUser.length > 0) {
-        return res.status(400).json({ error: "Nomor HP sudah terdaftar." });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const id = uuidv4();
-
-      const newUser = await db.insert(users).values({
-        id, nim: nim || '', phone, password: hashedPassword, name, email, role: role || 'Anggota'
-      }).returning();
-
-      await logActivity(id, "Pendaftaran", `Mendaftar dengan nama ${name}`);
-
-      const token = jwt.sign({ id: newUser[0].id, phone: newUser[0].phone, name: newUser[0].name }, JWT_SECRET, { expiresIn: '7d' });
-      res.json({ user: { id: newUser[0].id, nim: newUser[0].nim, name: newUser[0].name, phone: newUser[0].phone, email: newUser[0].email, role: newUser[0].role, permissions: newUser[0].permissions }, token });
-    } catch (e: any) {
-      console.error(e);
-      res.status(500).json({ error: "Gagal mendaftar.", details: e.message });
-    }
-  });
-
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log("1. Request:", req.body);
+
       const { phone, password } = req.body;
-      const result = await db.select().from(users).where(eq(users.phone, phone));
+
+      console.log("2. Query user...");
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.phone, phone));
+
+      console.log("3. Result:", result);
 
       if (result.length === 0) {
         return res.status(401).json({ error: "Nomor HP tidak terdaftar." });
       }
 
       const user = result[0];
+
+      console.log("4. Compare password...");
       const validPassword = await bcrypt.compare(password, user.password);
+
+      console.log("5. Valid:", validPassword);
 
       if (!validPassword) {
         return res.status(401).json({ error: "Password salah." });
       }
 
-      await logActivity(user.id, "Login", "Berhasil masuk ke aplikasi");
+      await logActivity(
+        user.id,
+        "Login",
+        "Berhasil masuk ke aplikasi"
+      );
 
-      const token = jwt.sign({ id: user.id, phone: user.phone, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
-      res.json({ user: { id: user.id, nim: user.nim, name: user.name, phone: user.phone, email: user.email, role: user.role, permissions: user.permissions }, token });
+      console.log("6. Generate JWT...");
+
+      const token = jwt.sign(
+        {
+          id: user.id,
+          phone: user.phone,
+          name: user.name,
+        },
+        JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+
+      return res.json({
+        user: {
+          id: user.id,
+          nim: user.nim,
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          role: user.role,
+          permissions: user.permissions,
+        },
+        token,
+      });
+
     } catch (e: any) {
-      console.error(e);
-      res.status(500).json({ error: "Gagal login.", details: e.message });
+      console.error("LOGIN ERROR:", e);
+
+      res.status(500).json({
+        error: "Gagal login",
+        details: e.message,
+      });
     }
   });
 
+
+  // GET USER LOGIN
   app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const result = await db.select().from(users).where(eq(users.id, req.user!.id));
-      if (result.length === 0) return res.status(404).json({ error: "User not found" });
+      console.log("=== AUTH ME DIPANGGIL ===");
+
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user!.id));
+
+      if (result.length === 0) {
+        return res.status(404).json({
+          error: "User tidak ditemukan"
+        });
+      }
+
       const { password, ...userWithoutPassword } = result[0];
-      res.json({ user: userWithoutPassword });
-    } catch (e) {
-      res.status(500).json({ error: "Failed to fetch user" });
-    }
-  });
 
-  app.put("/api/auth/password", requireAuth, async (req: AuthRequest, res) => {
-    try {
-      const { oldPassword, newPassword } = req.body;
-      const user = await db.select().from(users).where(eq(users.id, req.user!.id));
-      if (user.length === 0) return res.status(404).json({ error: "User tidak ditemukan" });
+      res.json({
+        user: userWithoutPassword
+      });
 
-      const valid = await bcrypt.compare(oldPassword, user[0].password);
-      if (!valid) return res.status(401).json({ error: "Password lama salah" });
+    } catch (e: any) {
+      console.error("AUTH ME ERROR:", e);
 
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      console.log(hashedPassword);
-      await db.update(users).set({ password: hashedPassword }).where(eq(users.id, req.user!.id));
-      await logActivity(req.user!.id, "Ubah Sandi", "Pengguna mengubah kata sandi mereka");
-      res.json({ message: "Password berhasil diubah" });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: "Gagal mengubah password" });
+      res.status(500).json({
+        error: "Gagal mengambil data user"
+      });
     }
   });
 

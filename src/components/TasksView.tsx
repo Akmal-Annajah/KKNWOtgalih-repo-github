@@ -15,7 +15,7 @@ interface Props {
 
 export function TasksView({ tasks, setTasks, participants, events, getToken }: Props) {
   const { user } = useAuth();
-  
+
   const perms = useMemo(() => getPermissions(user, 'tasks'), [user]);
   const canEdit = perms.update;
   const canCreate = perms.create;
@@ -118,8 +118,8 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
 
   const filteredTasks = tasks.filter(t => {
     const matchesTab = activeTab === 'all' || t.taskType === activeTab;
-    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (t.description?.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.description?.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesTab && matchesSearch;
   });
 
@@ -129,7 +129,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Job Desk Tracker</h2>
         <div className="flex flex-col sm:flex-row gap-3">
           {canCreate && (
-            <button 
+            <button
               onClick={() => {
                 setFormTaskType(activeTab === 'all' ? 'non-event' : activeTab);
                 setIsAddModalOpen(true);
@@ -139,28 +139,28 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
               <Plus className="w-4 h-4" /> Tambah Tugas
             </button>
           )}
-          <input 
-            type="text" 
-            placeholder="Cari tugas..." 
+          <input
+            type="text"
+            placeholder="Cari tugas..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full sm:w-64 p-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-sm"
           />
           <div className="flex bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
-            <button 
-              onClick={() => setActiveTab('all')} 
+            <button
+              onClick={() => setActiveTab('all')}
               className={`flex-1 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Semua
             </button>
-            <button 
-              onClick={() => setActiveTab('event')} 
+            <button
+              onClick={() => setActiveTab('event')}
               className={`flex-1 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <CalendarDays className="w-4 h-4" /> Kegiatan
             </button>
-            <button 
-              onClick={() => setActiveTab('non-event')} 
+            <button
+              onClick={() => setActiveTab('non-event')}
               className={`flex-1 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${activeTab === 'non-event' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <Inbox className="w-4 h-4" /> Non-Kegiatan
@@ -183,7 +183,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                   {colTasks.length}
                 </span>
               </div>
-              
+
               <div className="space-y-3">
                 {colTasks.length === 0 ? (
                   <div className="text-center py-8 text-sm text-gray-400">Belum ada tugas.</div>
@@ -211,11 +211,10 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                             Non-Kegiatan
                           </span>
                         )}
-                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                          task.priority === 'High' ? 'bg-red-100 text-red-700 border border-red-200' :
-                          task.priority === 'Low' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                          'bg-amber-100 text-amber-700 border border-amber-200'
-                        }`}>
+                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${task.priority === 'High' ? 'bg-red-100 text-red-700 border border-red-200' :
+                            task.priority === 'Low' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                              'bg-amber-100 text-amber-700 border border-amber-200'
+                          }`}>
                           {task.priority || 'Medium'}
                         </span>
                         {eventObj && (
@@ -225,7 +224,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                         )}
                         {task.deadline && (
                           <span className="inline-block text-[10px] font-bold text-red-700 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> {new Date(task.deadline).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}
+                            <Clock className="w-3 h-3" /> {new Date(task.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                           </span>
                         )}
                         {task.referenceLink && (
@@ -235,7 +234,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                         )}
                       </div>
                       {task.description && <p className="text-xs text-gray-500 mb-3 leading-relaxed">{task.description}</p>}
-                      
+
                       <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
                         <div className="flex flex-wrap gap-1 max-w-[160px]">
                           {assignees.length > 0 ? (
@@ -250,9 +249,9 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                             </span>
                           )}
                         </div>
-                        
-                        <select 
-                          value={task.status} 
+
+                        <select
+                          value={task.status}
                           onChange={e => updateStatus(task.id, e.target.value as Task['status'])}
                           disabled={!canEditTask(task.assigneeId)}
                           className="text-xs bg-white border border-gray-200 rounded p-1 text-gray-600 font-medium cursor-pointer outline-none hover:border-emerald-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -276,7 +275,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 flex-shrink-0">
               <h3 className="font-semibold text-gray-900">Tugaskan Pekerjaan Baru</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
+              <button onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-4 overflow-y-auto">
               <form id="task-form" onSubmit={handleAdd} className="space-y-4">
@@ -294,17 +293,6 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                       </label>
                     </div>
                   </div>
-                  {formTaskType === 'event' && (
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Pilih Kegiatan</label>
-                      <select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} required className="w-full p-2 border border-gray-200 rounded-lg text-sm">
-                        <option value="">-- Pilih Kegiatan --</option>
-                        {events.map(ev => (
-                          <option key={ev.id} value={ev.id}>{ev.title}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Judul Tugas</label>
                     <input type="text" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-2 border border-gray-200 rounded-lg text-sm" />
@@ -317,17 +305,17 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                     <label className="block text-xs font-medium text-gray-700 mb-1">Prioritas</label>
                     <select value={priority} onChange={e => setPriority(e.target.value as any)} className="w-full p-2 border border-gray-200 rounded-lg text-sm">
                       <option value="Low">Rendah</option>
-                    <option value="Medium">Sedang</option>
-                    <option value="High">Tinggi</option>
-                  </select>
-                </div>
+                      <option value="Medium">Sedang</option>
+                      <option value="High">Tinggi</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Deadline</label>
                     <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg text-sm" />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">Tugaskan Ke (Pilih Anggota)</label>
-                    
+
                     {/* Search Box */}
                     <div className="relative mb-2">
                       <input
@@ -370,9 +358,8 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                         .map(p => {
                           const isChecked = selectedAssignees.includes(p.id);
                           return (
-                            <label key={p.id} className={`flex items-center gap-2 text-xs font-medium cursor-pointer p-1.5 rounded-lg transition-colors ${
-                              isChecked ? 'bg-emerald-50 text-emerald-800' : 'text-gray-700 hover:bg-gray-100'
-                            }`}>
+                            <label key={p.id} className={`flex items-center gap-2 text-xs font-medium cursor-pointer p-1.5 rounded-lg transition-colors ${isChecked ? 'bg-emerald-50 text-emerald-800' : 'text-gray-700 hover:bg-gray-100'
+                              }`}>
                               <input
                                 type="checkbox"
                                 checked={isChecked}
@@ -394,8 +381,8 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                         const q = assigneeSearch.toLowerCase();
                         return p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q);
                       }).length === 0 && (
-                        <p className="text-xs text-gray-400 col-span-2 text-center py-4">Anggota tidak ditemukan.</p>
-                      )}
+                          <p className="text-xs text-gray-400 col-span-2 text-center py-4">Anggota tidak ditemukan.</p>
+                        )}
                     </div>
                   </div>
                   <div>
