@@ -26,6 +26,7 @@ export interface Transaction {
   type: 'income' | 'expense';
   category: 'kas' | 'proker';
   proofLink: string;
+  referenceLink?: string;
   status: 'active' | 'cancelled';
 }
 
@@ -48,6 +49,7 @@ export interface KKNEvent {
   time?: string;
   title: string;
   description: string;
+  referenceLink?: string;
   category?: 'rapat' | 'kunjungan' | 'deadline_kampus' | 'kegiatan' | 'seminar' | 'sosialisasi' | 'lainnya';
 }
 

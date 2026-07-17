@@ -279,7 +279,7 @@ async function startServer() {
     try {
       // Hanya admin utama yang boleh reset password
       const adminUser = await db.select().from(users).where(eq(users.id, req.user!.id));
-      if (adminUser.length === 0 || (adminUser[0].nim !== '223125416' && adminUser[0].nim !== '223140101')) {
+      if (adminUser.length === 0 || (adminUser[0].nim !== '223140101')) {
         return res.status(403).json({ error: "Akses ditolak. Hanya Admin yang dapat mereset password." });
       }
 
@@ -342,9 +342,9 @@ async function startServer() {
 
   app.post("/api/transactions", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const { id, date, description, amount, type, category, proofLink } = req.body;
+      const { id, date, description, amount, type, category, proofLink, referenceLink } = req.body;
       const result = await db.insert(transactions).values({
-        id, userId: req.user!.id, date, description, amount, type, category: category || 'kas', proofLink: proofLink || ''
+        id, userId: req.user!.id, date, description, amount, type, category: category || 'kas', proofLink: proofLink || '', referenceLink: referenceLink || ''
       }).returning();
 
       await db.insert(transactionLogs).values({
@@ -365,13 +365,13 @@ async function startServer() {
 
   app.put("/api/transactions/:id", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const { date, description, amount, type, category, proofLink, status } = req.body;
+      const { date, description, amount, type, category, proofLink, referenceLink, status } = req.body;
       const oldTx = await db.select().from(transactions).where(eq(transactions.id, req.params.id));
       const old = oldTx[0];
       if (!old) return res.status(404).json({ error: "Transaction not found" });
 
       const result = await db.update(transactions).set({
-        date, description, amount, type, category, proofLink, status
+        date, description, amount, type, category, proofLink, referenceLink, status
       }).where(eq(transactions.id, req.params.id)).returning();
 
       const changes: string[] = [];
@@ -382,6 +382,7 @@ async function startServer() {
       if (old.category !== category) changes.push(`Kategori: ${old.category} -> ${category}`);
       if (old.status !== status) changes.push(`Status: ${old.status} -> ${status}`);
       if (old.proofLink !== proofLink) changes.push(`Bukti: ${old.proofLink ? 'Ada' : 'Kosong'} -> ${proofLink ? 'Ada' : 'Kosong'}`);
+      if (old.referenceLink !== referenceLink) changes.push(`Tautan Referensi: ${old.referenceLink ? 'Ada' : 'Kosong'} -> ${referenceLink ? 'Ada' : 'Kosong'}`);
 
       if (changes.length > 0) {
         await db.insert(transactionLogs).values({
@@ -505,9 +506,9 @@ async function startServer() {
 
   app.post("/api/events", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const { id, date, time, title, description, category } = req.body;
+      const { id, date, time, title, description, category, referenceLink } = req.body;
       const result = await db.insert(events).values({
-        id, userId: req.user!.id, date, time: time || '08:00', title, description, category: category || 'other'
+        id, userId: req.user!.id, date, time: time || '08:00', title, description, category: category || 'other', referenceLink: referenceLink || ''
       }).returning();
 
       await logActivity(req.user!.id, "Menambahkan jadwal", `Jadwal: ${title}`);
@@ -520,9 +521,9 @@ async function startServer() {
 
   app.put("/api/events/:id", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const { date, time, title, description, category } = req.body;
+      const { date, time, title, description, category, referenceLink } = req.body;
       const result = await db.update(events).set({
-        date, time: time || '08:00', title, description, category: category || 'other'
+        date, time: time || '08:00', title, description, category: category || 'other', referenceLink: referenceLink || ''
       }).where(eq(events.id, req.params.id)).returning();
 
       await logActivity(req.user!.id, "Mengubah jadwal", `Mengubah jadwal: ${title}`);
@@ -542,11 +543,11 @@ async function startServer() {
     }
   });
 
-  // --- BACKUP & RESTORE FOR ADMIN (NIM: 223125416) ---
+  // --- BACKUP & RESTORE FOR ADMIN (NIM: 223140101) ---
   app.get("/api/admin/backup", requireAuth, async (req: AuthRequest, res) => {
     try {
       const adminCheck = await db.select().from(users).where(eq(users.id, req.user!.id));
-      if (adminCheck.length === 0 || (adminCheck[0].nim !== '223125416' && adminCheck[0].nim !== '223140101')) {
+      if (adminCheck.length === 0 || (adminCheck[0].nim !== '223140101')) {
         return res.status(403).json({ error: "Akses ditolak. Fitur ini khusus untuk Admin utama." });
       }
 
@@ -580,7 +581,7 @@ async function startServer() {
   app.post("/api/admin/restore", requireAuth, async (req: AuthRequest, res) => {
     try {
       const adminCheck = await db.select().from(users).where(eq(users.id, req.user!.id));
-      if (adminCheck.length === 0 || (adminCheck[0].nim !== '223125416' && adminCheck[0].nim !== '223140101')) {
+      if (adminCheck.length === 0 || (adminCheck[0].nim !== '223140101')) {
         return res.status(403).json({ error: "Akses ditolak. Fitur ini khusus untuk Admin utama." });
       }
 
@@ -618,9 +619,9 @@ async function startServer() {
       }));
 
       // Validate Admin user is present in restored users to prevent lock out
-      const hasAdmin = formattedUsers.some(u => u.nim === '223125416');
+      const hasAdmin = formattedUsers.some(u => u.nim === '223140101');
       if (!hasAdmin) {
-        return res.status(400).json({ error: "File backup tidak valid atau tidak berisi data akun Admin utama (NIM 223125416). Restore dibatalkan demi keamanan." });
+        return res.status(400).json({ error: "File backup tidak valid atau tidak berisi data akun Admin utama (NIM 223140101). Restore dibatalkan demi keamanan." });
       }
 
       // Format others
@@ -910,10 +911,17 @@ async function startServer() {
       }
 
       const currentUser = await db.select().from(users).where(eq(users.id, req.user!.id));
-      const isSuperAdmin = currentUser[0]?.nim === '223125416';
+      console.log("Current User:", currentUser[0]);
+      console.log("Role:", currentUser[0]?.role);
 
-      if (existingSession[0].isPermanent === 1 && !isSuperAdmin) {
-        return res.status(403).json({ error: "Sesi absensi ini sudah disimpan secara permanen. Hanya Admin Utama (NIM 223125416) yang dapat mengubahnya." });
+      const canModifyPermanentAttendance =
+        currentUser[0]?.role === 'Ketua' ||
+        currentUser[0]?.role === 'Sekretaris';
+
+      if (existingSession[0].isPermanent === 1 && !canModifyPermanentAttendance) {
+        return res.status(403).json({
+          error: "Sesi absensi ini sudah disimpan secara permanen. Hanya Ketua dan Sekretaris yang dapat mengubahnya."
+        });
       }
 
       const { title, date, notes, isPermanent, records } = req.body;
@@ -957,10 +965,18 @@ async function startServer() {
       }
 
       const currentUser = await db.select().from(users).where(eq(users.id, req.user!.id));
-      const isSuperAdmin = currentUser[0]?.nim === '223125416';
 
-      if (existingSession[0].isPermanent === 1 && !isSuperAdmin) {
-        return res.status(403).json({ error: "Sesi absensi ini sudah disimpan secara permanen. Hanya Admin Utama (NIM 223125416) yang dapat menghapusnya." });
+      console.log(currentUser[0]);
+
+      const canModifyPermanentAttendance =
+        currentUser[0]?.role === 'Ketua' ||
+        currentUser[0]?.role === 'Sekretaris' ||
+        currentUser[0]?.nim === '223140101';
+
+      if (existingSession[0].isPermanent === 1 && !canModifyPermanentAttendance) {
+        return res.status(403).json({
+          error: "Sesi absensi ini sudah disimpan secara permanen. Hanya Ketua dan Sekretaris yang dapat menghapusnya."
+        });
       }
 
       await db.delete(attendanceSessions).where(eq(attendanceSessions.id, sessionId));

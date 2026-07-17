@@ -20,6 +20,7 @@ export function ParticipantsView({ participants, setParticipants, getToken }: Pr
   const canCreate = perms.create;
   const canDelete = perms.delete;
   const isAdmin = user?.nim === '223125416' || user?.nim === '223140101';
+  const isSuperAdmin = user?.nim === '223140101';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
@@ -456,7 +457,7 @@ export function ParticipantsView({ participants, setParticipants, getToken }: Pr
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Jabatan</th>
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">No. WhatsApp</th>
-                <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Aksi</th>
+                {isSuperAdmin && <th className="p-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -473,31 +474,25 @@ export function ParticipantsView({ participants, setParticipants, getToken }: Pr
                   </td>
                   <td className="p-4 text-gray-600">{p.email || '-'}</td>
                   <td className="p-4 text-gray-600 font-mono text-xs">{p.contact || '-'}</td>
-                  <td className="p-4 text-center">
-                    {(canEdit || canDelete || isAdmin) && (
-                      <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {isAdmin && (
-                          <button
-                            onClick={() => resetPassword(p)}
-                            title="Reset Password ke 123456"
-                            className="text-gray-400 hover:text-amber-500 transition-colors"
-                          >
-                            <KeyRound className="w-4 h-4" />
-                          </button>
-                        )}
-                        {canEdit && (
-                          <button onClick={() => openEditModal(p)} className="text-gray-400 hover:text-emerald-600 transition-colors">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        {canDelete && (
-                          <button onClick={() => removeParticipant(p.id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                  {isSuperAdmin && (
+                    <td className="p-4 text-center">
+                      <div className="flex items-center justify-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => resetPassword(p)}
+                          title="Reset Password ke 123456"
+                          className="text-gray-400 hover:text-amber-500 transition-colors"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => openEditModal(p)} className="text-gray-400 hover:text-emerald-600 transition-colors">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => removeParticipant(p.id)} className="text-gray-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                    )}
-                  </td>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

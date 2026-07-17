@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, Users, Lock, Unlock, Trash2, Edit3, Plus, Search, 
+import {
+  Calendar, Users, Lock, Unlock, Trash2, Edit3, Plus, Search,
   AlertCircle, UserPlus, ChevronRight, ArrowLeft, Check, X,
   FileSpreadsheet, Loader2, Save, Info, CheckCircle, FileText, Download
 } from 'lucide-react';
@@ -41,7 +41,10 @@ interface Props {
 
 export default function AttendanceView({ getToken, participants }: Props) {
   const { user } = useAuth();
-  const isSuperAdmin = user?.nim === '223125416';
+  const isSuperAdmin =
+    user?.nim === '223140101' ||
+    user?.role === 'Ketua' ||
+    user?.role === 'Sekretaris';
 
   const perms = React.useMemo(() => getPermissions(user, 'attendance'), [user]);
   const canCreate = perms.create;
@@ -59,7 +62,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
   // Active view: 'list' | 'create' | 'edit' | 'detail'
   const [view, setView] = useState<'list' | 'create' | 'edit' | 'detail'>('list');
   const [selectedSession, setSelectedSession] = useState<AttendanceSession | null>(null);
-  
+
   // Form States
   const [formTitle, setFormTitle] = useState('');
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0]);
@@ -106,7 +109,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
     setFormNotes('');
     setFormIsPermanent(false);
     setCustomName('');
-    
+
     // Initialize record for each team participant
     const initialRecords: AttendeeRecord[] = participants.map(p => ({
       userId: p.id,
@@ -147,7 +150,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
   const handleAddCustomName = () => {
     const trimmed = customName.trim();
     if (!trimmed) return;
-    
+
     // Check if name already in list
     if (formRecords.some(r => r.name.toLowerCase() === trimmed.toLowerCase())) {
       alert('Nama sudah ada di daftar absensi!');
@@ -243,12 +246,12 @@ export default function AttendanceView({ getToken, participants }: Props) {
   // Delete session
   const handleDeleteSession = async (id: string, isLocked: boolean) => {
     if (isLocked && !isSuperAdmin) {
-      alert('Sesi ini terkunci secara permanen. Hanya Admin Utama (NIM 223125416) yang diizinkan untuk menghapusnya.');
+      alert('Anda tidak memiliki izin untuk menghapus sesi absensi permanen. Hanya Ketua dan Sekretaris yang dapat menghapusnya.');
       return;
     }
 
-    const confirmMsg = isLocked 
-      ? 'PERINGATAN: Sesi ini sudah terkunci secara permanen. Sebagai Admin Utama, apakah Anda yakin ingin menghapus data ini sepenuhnya?'
+    const confirmMsg = isLocked
+      ? 'PERINGATAN: Sesi absensi ini telah dikunci secara permanen. Tindakan ini akan menghapus seluruh data absensi dan tidak dapat dibatalkan.'
       : 'Apakah Anda yakin ingin menghapus sesi absensi ini? Tindakan ini tidak dapat dibatalkan.';
 
     if (!window.confirm(confirmMsg)) return;
@@ -273,8 +276,8 @@ export default function AttendanceView({ getToken, participants }: Props) {
 
   // Filtering logic
   const filteredSessions = sessions.filter(session => {
-    const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (session.notes && session.notes.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = session.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (session.notes && session.notes.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesDate = dateFilter ? session.date === dateFilter : true;
     return matchesSearch && matchesDate;
   });
@@ -305,7 +308,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
       }));
 
       const ws = XLSX.utils.json_to_sheet([]);
-      
+
       // Add Title and Metadata
       XLSX.utils.sheet_add_aoa(ws, [
         ['LAPORAN PRESENSI KEHADIRAN HARIAN KKN'],
@@ -328,7 +331,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Detail Presensi');
-      
+
       const cleanTitle = session.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
       XLSX.writeFile(wb, `presensi_harian_${cleanTitle}_${session.date}.xlsx`);
     } catch (err: any) {
@@ -340,58 +343,58 @@ export default function AttendanceView({ getToken, participants }: Props) {
   const exportSessionToPDF = (session: AttendanceSession, records: AttendeeRecord[]) => {
     try {
       const doc = new jsPDF();
-      
+
       // Header Banner
       doc.setFillColor(16, 185, 129); // emerald-500
       doc.rect(0, 0, 210, 38, 'F');
-      
+
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(15);
       doc.text('LAPORAN PRESENSI KEHADIRAN HARIAN KKN', 14, 16);
-      
+
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')}`, 14, 23);
       doc.text('Kuliah Kerja Nyata (KKN) - Sistem Informasi Kegiatan & Presensi Kehadiran', 14, 29);
-      
+
       // Metadata Slate
       doc.setTextColor(51, 65, 85);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('INFORMASI SESI PRESENSI:', 14, 48);
-      
+
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Judul Sesi : ${session.title}`, 14, 55);
       doc.text(`Tanggal    : ${new Date(session.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, 14, 61);
       doc.text(`Catatan    : ${session.notes || '-'}`, 14, 67);
       doc.text(`Status     : ${session.isPermanent === 1 ? 'Terkunci (Permanen)' : 'Draft Terbuka'}`, 14, 73);
-      
+
       // Stats Cards Row
       doc.setFillColor(248, 250, 252);
       doc.rect(14, 80, 182, 18, 'F');
       doc.setDrawColor(226, 232, 240);
       doc.rect(14, 80, 182, 18, 'S');
-      
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(16, 185, 129); // green
       doc.text('HADIR', 30, 87, { align: 'center' });
       doc.text(String(records.filter(r => r.status === 'Hadir').length), 30, 94, { align: 'center' });
-      
+
       doc.setTextColor(59, 130, 246); // blue
       doc.text('SAKIT', 70, 87, { align: 'center' });
       doc.text(String(records.filter(r => r.status === 'Sakit').length), 70, 94, { align: 'center' });
-      
+
       doc.setTextColor(245, 158, 11); // amber
       doc.text('IZIN', 110, 87, { align: 'center' });
       doc.text(String(records.filter(r => r.status === 'Izin').length), 110, 94, { align: 'center' });
-      
+
       doc.setTextColor(239, 68, 68); // red
       doc.text('ALPHA', 150, 87, { align: 'center' });
       doc.text(String(records.filter(r => r.status === 'Alpha').length), 150, 94, { align: 'center' });
-      
+
       doc.setTextColor(71, 85, 105); // slate
       doc.text('TOTAL', 185, 87, { align: 'center' });
       doc.text(String(records.length), 185, 94, { align: 'center' });
@@ -440,10 +443,10 @@ export default function AttendanceView({ getToken, participants }: Props) {
         doc.line(14, y + 7, 196, y + 7);
 
         doc.text(String(idx + 1), 17, y + 4);
-        
+
         const displayName = record.name.length > 30 ? record.name.substring(0, 28) + '..' : record.name;
         doc.text(displayName, 28, y + 4);
-        
+
         doc.text(record.userId ? 'Anggota KKN' : 'Tamu Undangan', 100, y + 4);
 
         if (record.status === 'Hadir') doc.setTextColor(16, 185, 129);
@@ -491,7 +494,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
       }));
 
       const ws = XLSX.utils.json_to_sheet([]);
-      
+
       XLSX.utils.sheet_add_aoa(ws, [
         ['LAPORAN REKAPITULASI SELURUH PRESENSI KEHADIRAN KKN'],
         ['Tanggal Cetak Laporan:', new Date().toLocaleDateString('id-ID')],
@@ -504,7 +507,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Rekapitulasi Sesi KKN');
-      
+
       XLSX.writeFile(wb, `rekapitulasi_semua_absen_kkn_${new Date().toISOString().split('T')[0]}.xlsx`);
     } catch (err: any) {
       alert('Gagal mengekspor semua data ke Excel: ' + err.message);
@@ -520,27 +523,27 @@ export default function AttendanceView({ getToken, participants }: Props) {
       }
 
       const doc = new jsPDF();
-      
+
       // Header Banner
       doc.setFillColor(16, 185, 129); // emerald-500
       doc.rect(0, 0, 210, 38, 'F');
-      
+
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(15);
       doc.text('LAPORAN REKAPITULASI PRESENSI KEHADIRAN KKN', 14, 16);
-      
+
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')}`, 14, 23);
       doc.text('Kuliah Kerja Nyata (KKN) - Ringkasan Akumulasi dan Rekapitulasi Sesi Kegiatan', 14, 29);
-      
+
       // Stats Highlights
       doc.setTextColor(51, 65, 85);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('RINGKASAN REKAPITULASI KESELURUHAN:', 14, 48);
-      
+
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Total Sesi Terlaksana : ${allSessions.length} Kegiatan Sesi`, 14, 55);
@@ -595,10 +598,10 @@ export default function AttendanceView({ getToken, participants }: Props) {
         doc.line(14, y + 7, 196, y + 7);
 
         doc.text(String(idx + 1), 17, y + 4);
-        
+
         const displayTitle = session.title.length > 32 ? session.title.substring(0, 30) + '..' : session.title;
         doc.text(displayTitle, 28, y + 4);
-        
+
         doc.text(session.date, 95, y + 4);
 
         doc.setFont('helvetica', 'bold');
@@ -762,8 +765,8 @@ export default function AttendanceView({ getToken, participants }: Props) {
               </div>
               <h3 className="font-bold text-gray-900 text-base">Belum Ada Sesi Absensi</h3>
               <p className="text-sm text-gray-500 max-w-xs mx-auto">
-                {searchTerm || dateFilter 
-                  ? "Tidak ada sesi absensi yang cocok dengan kriteria pencarian Anda." 
+                {searchTerm || dateFilter
+                  ? "Tidak ada sesi absensi yang cocok dengan kriteria pencarian Anda."
                   : "Buat sesi absensi baru untuk mulai mendata kehadiran anggota KKN."}
               </p>
               {!searchTerm && !dateFilter && canCreate && (
@@ -780,15 +783,15 @@ export default function AttendanceView({ getToken, participants }: Props) {
               {filteredSessions.map((session) => {
                 const isLocked = session.isPermanent === 1;
                 const canEditThis = (!isLocked && canEdit) || isSuperAdmin;
-                
+
                 // Calculate percentage
                 const presentCount = session.counts?.hadir || 0;
                 const totalCount = session.counts?.total || 0;
                 const percent = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
 
                 return (
-                  <div 
-                    key={session.id} 
+                  <div
+                    key={session.id}
                     className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-emerald-100 transition-all p-5 flex flex-col justify-between space-y-4"
                   >
                     <div>
@@ -797,7 +800,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
                           {percent}% Hadir
                         </span>
-                        
+
                         {isLocked ? (
                           <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <Lock className="w-3 h-3" /> Permanen / Terkunci
@@ -813,7 +816,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
                       <h3 className="font-bold text-gray-900 text-base line-clamp-1 mb-1" title={session.title}>
                         {session.title}
                       </h3>
-                      
+
                       <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
                         <Calendar className="w-3.5 h-3.5" />
                         <span>{new Date(session.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -860,11 +863,10 @@ export default function AttendanceView({ getToken, participants }: Props) {
                         {canEdit && (
                           <button
                             onClick={() => loadSession(session, 'edit')}
-                            className={`text-xs font-semibold px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${
-                              canEditThis 
-                                ? 'text-amber-700 bg-amber-50 hover:bg-amber-100/80 border border-amber-100'
-                                : 'text-gray-400 bg-gray-50 border border-gray-100 cursor-not-allowed'
-                            }`}
+                            className={`text-xs font-semibold px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${canEditThis
+                              ? 'text-amber-700 bg-amber-50 hover:bg-amber-100/80 border border-amber-100'
+                              : 'text-gray-400 bg-gray-50 border border-gray-100 cursor-not-allowed'
+                              }`}
                             title={canEditThis ? 'Isi atau ubah kehadiran' : 'Terkunci. Hanya Admin Utama yang bisa mengedit.'}
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -875,11 +877,10 @@ export default function AttendanceView({ getToken, participants }: Props) {
                         {canDelete && (
                           <button
                             onClick={() => handleDeleteSession(session.id, isLocked)}
-                            className={`p-2 rounded-lg transition-all ${
-                              canEditThis 
-                                ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                                : 'text-gray-300 bg-gray-50 cursor-not-allowed'
-                            }`}
+                            className={`p-2 rounded-lg transition-all ${canEditThis
+                              ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                              : 'text-gray-300 bg-gray-50 cursor-not-allowed'
+                              }`}
                             title={canEditThis ? 'Hapus Sesi Absensi' : 'Terkunci. Hanya Admin Utama yang bisa menghapus.'}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1015,8 +1016,8 @@ export default function AttendanceView({ getToken, participants }: Props) {
             <div className="max-h-96 overflow-y-auto space-y-2 pr-1.5">
               {formRecords.map((record, index) => ({ record, index })).filter(({ record }) => record.name.toLowerCase().includes(searchName.toLowerCase())).map(({ record, index }) => {
                 return (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-all gap-3"
                   >
                     {/* Name column */}
@@ -1090,11 +1091,11 @@ export default function AttendanceView({ getToken, participants }: Props) {
                 <Lock className="w-3.5 h-3.5" /> Simpan Permanen (Kunci Absensi)
               </span>
             </div>
-            
+
             <div className="flex items-center shrink-0">
               <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={formIsPermanent}
                   onChange={e => setFormIsPermanent(e.target.checked)}
                   className="sr-only peer"
@@ -1159,7 +1160,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
                 <span>Unduh PDF Sesi</span>
               </button>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {selectedSession.isPermanent === 1 ? (
                 <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3 py-1 rounded-full flex items-center gap-1">
@@ -1218,7 +1219,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
           {/* Rekap Table */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider pb-2 border-b border-gray-100">Daftar Hasil Presensi ({formRecords.length} Orang)</h3>
-            
+
             <div className="overflow-x-auto rounded-xl border border-gray-100">
               <table className="w-full text-left text-sm border-collapse bg-white">
                 <thead>
@@ -1270,7 +1271,7 @@ export default function AttendanceView({ getToken, participants }: Props) {
               <div>
                 <strong className="font-semibold text-rose-950">REKAP ABSENSI TERKUNCI PERMANEN:</strong>
                 <p className="leading-relaxed mt-0.5">
-                  Sesi ini telah disimpan secara permanen. Hanya Admin Utama dengan NIM 223125416 yang diizinkan untuk mengedit, membuka gembok kuncinya, atau menghapus sesi absensi ini.
+                  Sesi ini telah disimpan secara permanen. Hanya Admin Utama dengan NIM 223140101 yang diizinkan untuk mengedit, membuka gembok kuncinya, atau menghapus sesi absensi ini.
                 </p>
               </div>
             </div>

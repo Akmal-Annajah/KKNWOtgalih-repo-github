@@ -22,6 +22,7 @@ export const transactions = pgTable('transactions', {
   type: text('type').notNull(), // 'income' | 'expense'
   category: text('category').notNull().default('kas'), // 'kas' | 'proker'
   proofLink: text('proof_link').notNull().default(''), // Google Drive link
+  referenceLink: text('reference_link').default(''),
   status: text('status').notNull().default('active'), // 'active' | 'cancelled'
   createdAt: timestamp('created_at').defaultNow(),
 });
@@ -48,6 +49,7 @@ export const events = pgTable('events', {
   time: text('time').default('08:00'),
   title: text('title').notNull(),
   description: text('description'),
+  referenceLink: text('reference_link').default(''),
   category: text('category').default('other'),
   createdAt: timestamp('created_at').defaultNow(),
 });

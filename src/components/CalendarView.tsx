@@ -1,6 +1,6 @@
 import { useState, FormEvent, useMemo } from 'react';
 import { KKNEvent } from '../types';
-import { Trash2, Edit2, CalendarDays, Plus, X, Clock, Tag } from 'lucide-react';
+import { Trash2, Edit2, CalendarDays, Plus, X, Clock, Tag, ExternalLink } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { getPermissions } from '../lib/permissions';
 
@@ -24,6 +24,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState('08:00');
   const [desc, setDesc] = useState('');
+  const [referenceLink, setReferenceLink] = useState('');
   const [category, setCategory] = useState<'rapat' | 'kunjungan' | 'deadline_kampus' | 'kegiatan' | 'seminar' | 'sosialisasi' | 'lainnya'>('kegiatan');
 
   // State for Edit Modal
@@ -32,6 +33,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
   const [editDate, setEditDate] = useState('');
   const [editTime, setEditTime] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [editReferenceLink, setEditReferenceLink] = useState('');
   const [editCategory, setEditCategory] = useState<'rapat' | 'kunjungan' | 'deadline_kampus' | 'kegiatan' | 'seminar' | 'sosialisasi' | 'lainnya'>('kegiatan');
 
   // Filter category state
@@ -47,6 +49,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
       date,
       time: time || '08:00',
       description: desc,
+      referenceLink,
       category
     };
 
@@ -66,6 +69,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
         }));
         setTitle('');
         setDesc('');
+        setReferenceLink('');
         setTime('08:00');
         setCategory('kegiatan');
         setIsModalOpen(false);
@@ -81,6 +85,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
     setEditDate(ev.date);
     setEditTime(ev.time || '08:00');
     setEditDesc(ev.description || '');
+    setEditReferenceLink(ev.referenceLink || '');
     setEditCategory(ev.category || 'kegiatan');
   };
 
@@ -94,6 +99,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
       date: editDate,
       time: editTime || '08:00',
       description: editDesc,
+      referenceLink: editReferenceLink,
       category: editCategory
     };
 
@@ -289,6 +295,11 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isPast ? 'bg-gray-100 text-gray-500 border-gray-200' : styles.badge}`}>
                           {getCategoryLabel(ev.category)}
                         </span>
+                        {ev.referenceLink && (
+                          <a href={ev.referenceLink} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-emerald-600 transition-colors ml-1 p-1 hover:bg-gray-50 rounded" title="Buka Tautan Referensi">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -313,7 +324,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mb-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-2">
                       <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                         {eventDate.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                       </span>
@@ -400,6 +411,17 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
                     <option value="sosialisasi">Sosialisasi</option>
                     <option value="lainnya">Lainnya</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tautan Referensi</label>
+                  <input
+                    type="url"
+                    value={referenceLink}
+                    onChange={e => setReferenceLink(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all"
+                    placeholder="https://..."
+                  />
                 </div>
 
                 <div>
@@ -499,6 +521,17 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
                     <option value="sosialisasi">Sosialisasi</option>
                     <option value="lainnya">Lainnya</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tautan Referensi</label>
+                  <input
+                    type="url"
+                    value={editReferenceLink}
+                    onChange={e => setEditReferenceLink(e.target.value)}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all"
+                    placeholder="https://..."
+                  />
                 </div>
 
                 <div>

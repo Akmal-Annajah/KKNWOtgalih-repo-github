@@ -37,7 +37,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [activeTab, setActiveTab] = useState<'kas' | 'proker'>('kas');
   const [formCategory, setFormCategory] = useState<'kas' | 'proker'>('kas');
-  const [proofLink, setProofLink] = useState('');
+  const [referenceLink, setReferenceLink] = useState('');
 
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
@@ -118,6 +118,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
       type,
       category: formCategory,
       proofLink: '',
+      referenceLink,
       status: 'active' as const
     };
 
@@ -131,6 +132,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
     setTransactions([newTx as Transaction, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setDesc('');
     setAmount('');
+    setReferenceLink('');
     setIsAddModalOpen(false);
   };
 
@@ -268,7 +270,14 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
               ) : filteredTransactions.map(tx => (
                 <tr key={tx.id} className={`text-sm transition-colors group ${tx.status === 'cancelled' ? 'bg-gray-50' : 'hover:bg-gray-50/50'}`}>
                   <td className={`p-4 ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-600'}`}>{new Date(tx.date).toLocaleDateString('id-ID')}</td>
-                  <td className={`p-4 font-medium whitespace-normal min-w-[200px] ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{tx.description}</td>
+                  <td className={`p-4 font-medium whitespace-normal min-w-[200px] ${tx.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                    {tx.description}
+                    {tx.referenceLink && (
+                      <a href={tx.referenceLink} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center text-gray-400 hover:text-emerald-600 transition-colors" title="Buka Tautan Referensi">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </td>
                   <td className="p-4">
                     <div className="flex gap-2 items-center flex-wrap">
                       <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase ${tx.status === 'cancelled' ? 'bg-gray-100 text-gray-500' : (tx.type === 'income' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700')}`}>
@@ -333,6 +342,11 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                 )}
               </div>
               <div className="flex items-center gap-1">
+                {tx.referenceLink && (
+                  <a href={tx.referenceLink} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50" title="Buka Tautan Referensi">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
                 <button onClick={() => openHistory(tx)} className="text-gray-400 hover:text-blue-500 transition-colors p-1.5 rounded-lg hover:bg-blue-50" title="Histori"><History className="w-4 h-4" /></button>
                 {canEdit && <button onClick={() => setEditingTx(tx)} className="text-gray-400 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50" title="Ubah"><Edit2 className="w-4 h-4" /></button>}
                 {canDelete && <button onClick={() => deleteTransaction(tx.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50" title="Hapus"><Trash2 className="w-4 h-4" /></button>}
@@ -362,6 +376,10 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Deskripsi</label>
                     <input type="text" value={editingTx.description} onChange={e => setEditingTx({...editingTx, description: e.target.value})} className="w-full p-2 border border-gray-200 rounded-lg text-sm" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Tautan Referensi</label>
+                    <input type="url" placeholder="https://..." value={editingTx.referenceLink || ''} onChange={e => setEditingTx({...editingTx, referenceLink: e.target.value})} className="w-full p-2 border border-gray-200 rounded-lg text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Tipe</label>
@@ -416,6 +434,10 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Deskripsi</label>
                     <input type="text" placeholder="Mis: Beli ATK, Iuran" value={desc} onChange={e => setDesc(e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg text-sm" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Tautan Referensi</label>
+                    <input type="url" placeholder="https://..." value={referenceLink} onChange={e => setReferenceLink(e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Tipe</label>

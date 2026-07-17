@@ -3,7 +3,7 @@ import { User } from '../types';
 export function getPermissions(user: User | null, moduleName: 'participants' | 'finance' | 'tasks' | 'calendar' | 'attendance') {
   if (!user) return { create: false, read: false, update: false, delete: false };
 
-  const isAdmin = user.nim === '223125416' || user.nim === '223140101' || user.role === 'Ketua';
+  const isAdmin = user.nim === '223140101' || user.role === 'Admin';
 
   // 1. For Participants: ONLY admin/saya can create (tambah), update, and delete
   if (moduleName === 'participants') {
