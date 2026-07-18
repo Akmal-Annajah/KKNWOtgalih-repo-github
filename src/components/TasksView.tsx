@@ -196,7 +196,7 @@ export function TasksView({ tasks, setTasks, participants, events, getToken }: P
                       <div className="flex justify-between items-start mb-1.5">
                         <h4 className="font-medium text-gray-900 text-sm leading-tight pr-4">{task.title}</h4>
                         {canDelete && (
-                          <button onClick={() => removeTask(task.id)} className="text-gray-300 hover:text-red-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                          <button onClick={() => removeTask(task.id)} className="text-gray-300 hover:text-red-500 transition-opacity flex-shrink-0">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}

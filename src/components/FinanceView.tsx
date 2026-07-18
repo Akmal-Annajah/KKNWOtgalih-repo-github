@@ -294,7 +294,7 @@ export function FinanceView({ transactions, setTransactions, getToken }: Props) 
                     {tx.type === 'income' ? '+' : '-'} Rp {tx.amount.toLocaleString('id-ID')}
                   </td>
                   <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-center gap-3 transition-opacity">
                       <button onClick={() => openHistory(tx)} className="text-gray-400 hover:text-blue-500 transition-colors" title="Histori Perubahan">
                         <History className="w-4 h-4 mx-auto" />
                       </button>

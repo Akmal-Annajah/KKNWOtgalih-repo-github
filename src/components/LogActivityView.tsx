@@ -112,7 +112,7 @@ export function LogActivityView({ getToken, participants }: Props) {
                       {canManageLogs && (
                         <button 
                           onClick={() => deleteLog(log.id)}
-                          className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-gray-100"
+                          className="text-gray-400 hover:text-red-500 transition-opacity p-1 rounded-lg hover:bg-gray-100"
                           title="Hapus Log"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

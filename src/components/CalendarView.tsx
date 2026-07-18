@@ -306,7 +306,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
                         {canEdit && (
                           <button
                             onClick={() => openEditModal(ev)}
-                            className="text-gray-400 hover:text-emerald-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-50 rounded"
+                            className="text-gray-400 hover:text-emerald-600 transition-opacity p-1 hover:bg-gray-50 rounded"
                             title="Edit Agenda"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -315,7 +315,7 @@ export function CalendarView({ events, setEvents, getToken }: Props) {
                         {canDelete && (
                           <button
                             onClick={() => removeEvent(ev.id)}
-                            className="text-gray-400 hover:text-red-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-50 rounded"
+                            className="text-gray-400 hover:text-red-500 transition-opacity p-1 hover:bg-gray-50 rounded"
                             title="Hapus Agenda"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
