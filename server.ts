@@ -171,6 +171,40 @@ async function startServer() {
     }
   });
 
+  // --- CHANGE PASSWORD ---
+  app.put("/api/auth/password", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      if (!oldPassword || !newPassword) {
+        return res.status(400).json({ error: "Sandi lama dan sandi baru wajib diisi." });
+      }
+      if (newPassword.length < 4) {
+        return res.status(400).json({ error: "Sandi baru minimal 4 karakter." });
+      }
+
+      const result = await db.select().from(users).where(eq(users.id, req.user!.id));
+      if (result.length === 0) {
+        return res.status(404).json({ error: "User tidak ditemukan." });
+      }
+
+      const user = result[0];
+      const validOld = await bcrypt.compare(oldPassword, user.password);
+      if (!validOld) {
+        return res.status(401).json({ error: "Sandi lama tidak sesuai." });
+      }
+
+      const hashedNew = await bcrypt.hash(newPassword, 10);
+      await db.update(users).set({ password: hashedNew }).where(eq(users.id, req.user!.id));
+
+      await logActivity(req.user!.id, "Mengubah Sandi", "Berhasil mengubah sandi akun");
+
+      res.json({ message: "Sandi berhasil diubah!" });
+    } catch (e: any) {
+      console.error("CHANGE PASSWORD ERROR:", e);
+      res.status(500).json({ error: "Gagal mengubah sandi." });
+    }
+  });
+
   // --- PARTICIPANTS (Users) ---
   app.get("/api/participants", requireAuth, async (req: AuthRequest, res) => {
     try {

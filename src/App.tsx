@@ -7,7 +7,7 @@ import { FinanceView } from './components/FinanceView';
 import { TasksView } from './components/TasksView';
 import { CalendarView } from './components/CalendarView';
 import { LogActivityView } from './components/LogActivityView';
-import { LayoutDashboard, Users, Wallet, CheckSquare, CalendarDays, Activity, Menu, X, LogOut, Loader2, Database, ClipboardCheck, KeyRound } from 'lucide-react';
+import { LayoutDashboard, Users, Wallet, CheckSquare, CalendarDays, Activity, Menu, X, LogOut, Loader2, Database, ClipboardCheck, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { BackupRestoreView } from './components/BackupRestoreView';
 import AttendanceView from './components/AttendanceView';
@@ -18,6 +18,8 @@ function ChangePasswordModal({ isOpen, onClose, getToken }: { isOpen: boolean, o
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   if (!isOpen) return null;
 
@@ -42,6 +44,8 @@ function ChangePasswordModal({ isOpen, onClose, getToken }: { isOpen: boolean, o
           setOldPassword('');
           setNewPassword('');
           setSuccess('');
+          setShowOldPassword(false);
+          setShowNewPassword(false);
         }, 2000);
       } else {
         setError(data.error);
@@ -63,11 +67,21 @@ function ChangePasswordModal({ isOpen, onClose, getToken }: { isOpen: boolean, o
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Sandi Lama</label>
-            <input required type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 text-sm" />
+            <div className="relative">
+              <input required type={showOldPassword ? 'text' : 'password'} value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="w-full p-2 pr-10 border border-gray-200 rounded-lg outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 text-sm" />
+              <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded transition-colors" tabIndex={-1}>
+                {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Sandi Baru</label>
-            <input required type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 text-sm" />
+            <div className="relative">
+              <input required type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full p-2 pr-10 border border-gray-200 rounded-lg outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 text-sm" />
+              <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded transition-colors" tabIndex={-1}>
+                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           {error && <p className="text-xs font-medium text-red-500">{error}</p>}
           {success && <p className="text-xs font-medium text-emerald-500">{success}</p>}
